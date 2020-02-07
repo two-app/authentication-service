@@ -3,10 +3,14 @@ package tokens
 import com.typesafe.config.ConfigFactory
 import org.hashids.Hashids
 import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim}
+import spray.json.DefaultJsonProtocol.{jsonFormat2, _}
+import spray.json.RootJsonFormat
 
 case class Tokens(accessToken: String, refreshToken: String)
 
 object Tokens {
+  implicit val TokensFormat: RootJsonFormat[Tokens] = jsonFormat2(Tokens.apply)
+
   def apply(uid: Int, pid: Option[Int], cid: Option[Int]): Tokens = {
     val refreshToken = this.createRefreshToken(uid)
 
@@ -28,7 +32,7 @@ object Tokens {
   private def createConnectToken(uid: Int): String = {
     val secret = getConfigProperty("jwt.access.secret")
     val salt = getConfigProperty("hashids.salt")
-    val connectCode: String = new Hashids(salt, 6).encode(uid);
+    val connectCode: String = new Hashids(salt, 6).encode(uid)
     val claim = JwtClaim(issuer = Option("two"), content = s"""{"uid": $uid, "connectCode": "$connectCode", "role": "CONNECT"}""")
     Jwt.encode(claim, secret, JwtAlgorithm.HS256)
   }
