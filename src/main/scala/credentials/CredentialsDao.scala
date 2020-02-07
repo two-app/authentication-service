@@ -9,6 +9,8 @@ import scala.concurrent.Future
 
 trait CredentialsDao {
   def storeCredentials(credentials: EncodedCredentials): Future[Option[DatabaseError]]
+
+  def getCredentials(uid: Int): Future[Option[CredentialsRecord]]
 }
 
 class QuillCredentialsDao extends CredentialsDao {
@@ -25,6 +27,11 @@ class QuillCredentialsDao extends CredentialsDao {
         Option(DatabaseError.Other())
     }
   }
+
+  override def getCredentials(uid: Int): Future[Option[CredentialsRecord]] = run(quote {
+    querySchema[CredentialsRecord]("credentials").filter(f => f.uid == lift(uid))
+  }).map(r => r.headOption)
+
 }
 
 final case class CredentialsRecord(uid: Int, password: String)
