@@ -6,7 +6,7 @@ import response.ErrorResponse.InternalError
 import scala.concurrent.ExecutionContext.Implicits.{global => ec}
 import scala.concurrent.Future
 
-trait CredentialsService {
+sealed trait CredentialsService {
   def storeCredentials(credentials: EncodedCredentials): Future[Option[ErrorResponse]]
 }
 

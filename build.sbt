@@ -17,6 +17,7 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 libraryDependencies += "org.springframework.security" % "spring-security-crypto" % "5.2.2.RELEASE"
 libraryDependencies += "commons-logging" % "commons-logging" % "1.2" // dependent for spring-security
+libraryDependencies += "org.hashids" % "hashids" % "1.0.3"
 
 /** Databases */
 libraryDependencies ++= Seq(
