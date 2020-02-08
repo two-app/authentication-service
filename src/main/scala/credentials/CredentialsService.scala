@@ -7,7 +7,7 @@ import tokens.Tokens
 import scala.concurrent.ExecutionContext.Implicits.{global => ec}
 import scala.concurrent.Future
 
-sealed trait CredentialsService {
+trait CredentialsService {
   def storeCredentials(credentials: EncodedCredentials): Future[Either[ErrorResponse, Tokens]]
 }
 
