@@ -1,8 +1,7 @@
 package credentials
 
-import com.typesafe.scalalogging.Logger
-import spray.json.{JsNumber, JsString, JsValue, RootJsonFormat}
 import spray.json.DefaultJsonProtocol._
+import spray.json.{JsNumber, JsString, JsValue, RootJsonFormat}
 
 final case class ModelValidationError(reason: String)
 
