@@ -8,6 +8,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 class CredentialsRouteTest extends AnyFlatSpec with Matchers with ScalaFutures with ScalatestRouteTest with BeforeAndAfterEach {
 
@@ -22,6 +24,13 @@ class CredentialsRouteTest extends AnyFlatSpec with Matchers with ScalaFutures w
   "POST /credentials with valid credentials" should "return 200 OK" in {
     postCredentials(1, "testPassword") ~> route ~> check {
       response.status shouldBe StatusCodes.OK
+      val fields = entityAs[String].parseJson.asJsObject.fields
+
+      fields.contains("accessToken") shouldBe true
+      fields("accessToken").convertTo[String].length should be > 0
+
+      fields.contains("refreshToken") shouldBe true
+      fields("refreshToken").convertTo[String].length should be > 0
     }
   }
 

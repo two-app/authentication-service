@@ -1,12 +1,13 @@
 package credentials
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.Logger
 import response.ErrorResponse
 import response.ErrorResponse.ClientError
+import tokens.Tokens._
 
 class CredentialsRoute(credentialsService: CredentialsService) {
   val logger: Logger = Logger(classOf[CredentialsRoute])
@@ -30,8 +31,9 @@ class CredentialsRoute(credentialsService: CredentialsService) {
 
   def storeCredentials(userCredentials: UserCredentials): Route = {
     val encodedCredentials = EncodedCredentials(userCredentials)
-    onSuccess(credentialsService.storeCredentials(encodedCredentials)) { maybeError: Option[ErrorResponse] =>
-      maybeError.map(e => complete(e.status, e)).getOrElse(complete(StatusCodes.OK))
+    onSuccess(credentialsService.storeCredentials(encodedCredentials)) {
+      case Left(e) => complete(e.status, e)
+      case Right(tokens) => complete(tokens)
     }
   }
 }
