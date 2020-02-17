@@ -43,5 +43,5 @@ object Tokens {
     Jwt.encode(claim, secret, JwtAlgorithm.HS256)
   }
 
-  private def getConfigProperty(k: String): String = ConfigFactory.load().getString(k)
+  private def getConfigProperty(k: String): String = ConfigFactory.load(getClass.getClassLoader).getString(k)
 }
