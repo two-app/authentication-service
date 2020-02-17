@@ -6,10 +6,10 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import db.FlywayHelper
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.flatspec.{AnyFlatSpec, AsyncFlatSpec}
+import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import spray.json._
 import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 class CredentialsRouteTest extends AsyncFlatSpec with Matchers with ScalaFutures with ScalatestRouteTest with BeforeAndAfterEach {
 
