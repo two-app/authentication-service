@@ -4,11 +4,8 @@ import response.ErrorResponse
 import response.ErrorResponse.InternalError
 import tokens.Tokens
 
-import scala.concurrent.ExecutionContext.Implicits.{global => ec}
-import scala.concurrent.Future
 import cats.data.EitherT
 import cats.Monad
-import cats.implicits._
 
 trait CredentialsService[F[_]] {
   def storeCredentials(

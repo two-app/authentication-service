@@ -1,12 +1,6 @@
 package credentials
 
-import com.typesafe.scalalogging.Logger
-import db.DatabaseError
-
-import scala.concurrent.ExecutionContext.Implicits.{global => ec}
-import scala.concurrent.Future
 import cats.data.OptionT
-import cats.data.EitherT
 import cats.effect.Bracket
 
 import doobie.free.connection.ConnectionIO
