@@ -2,42 +2,56 @@ package credentials
 
 import com.typesafe.scalalogging.Logger
 import db.DatabaseError
-import db.ctx._
 
 import scala.concurrent.ExecutionContext.Implicits.{global => ec}
 import scala.concurrent.Future
+import cats.data.OptionT
+import cats.data.EitherT
+import cats.effect.Bracket
 
-trait CredentialsDao {
-  def storeCredentials(credentials: EncodedCredentials): Future[Option[DatabaseError]]
+import doobie.free.connection.ConnectionIO
+import doobie.implicits._
+import doobie.util.transactor.Transactor
 
-  def getCredentials(uid: Int): Future[Option[CredentialsRecord]]
+trait CredentialsDao[F[_]] {
+  def storeCredentials(
+      credentials: EncodedCredentials
+  ): F[Int]
+
+  def getCredentials(uid: Int): OptionT[F, EncodedCredentials]
 }
 
-class QuillCredentialsDao extends CredentialsDao {
-  val logger: Logger = Logger(classOf[CredentialsDao])
+class DoobieCredentialsDao[F[_]: Bracket[*[_], Throwable]](
+    val xa: Transactor[F]
+) extends CredentialsDao[F] {
 
-  override def storeCredentials(credentials: EncodedCredentials): Future[Option[DatabaseError]] = {
-    val record = CredentialsRecord(credentials)
-    logger.info(s"Storing credentials: $record.")
-    run(quote {
-      querySchema[CredentialsRecord]("credentials").insert(lift(record))
-    }).map(_ => None).recover {
-      case t: Throwable =>
-        logger.error(s"Severe error: failed to store user '${record.uid}' credentials.", t)
-        Option(DatabaseError.Other())
-    }
+  /**
+    * @param credentials to store. password must be encoded.
+    * @return the number of affected rows. If 0, the insert was
+    * not successful.
+    */
+  def storeCredentials(
+      credentials: EncodedCredentials
+  ): F[Int] = CredentialsSql.insert(credentials).transact(xa)
+
+  def getCredentials(uid: Int): OptionT[F, EncodedCredentials] = OptionT(
+    CredentialsSql.select(uid).transact(xa)
+  )
+}
+
+object CredentialsSql {
+  def insert(cr: EncodedCredentials): ConnectionIO[Int] = {
+    sql"""
+         | INSERT IGNORE INTO credentials (uid, password)
+         | VALUES (${cr.uid}, ${cr.encodedPassword})
+         |""".stripMargin.update.run
   }
 
-  override def getCredentials(uid: Int): Future[Option[CredentialsRecord]] = run(quote {
-    querySchema[CredentialsRecord]("credentials").filter(f => f.uid == lift(uid))
-  }).map(r => r.headOption)
-
-}
-
-final case class CredentialsRecord(uid: Int, password: String)
-
-object CredentialsRecord {
-  def apply(credentials: EncodedCredentials): CredentialsRecord = {
-    new CredentialsRecord(credentials.uid, credentials.encodedPassword)
+  def select(uid: Int): ConnectionIO[Option[EncodedCredentials]] = {
+    sql"""
+         | SELECT uid, password
+         | FROM user
+         | WHERE uid = $uid
+         |""".stripMargin.query[EncodedCredentials].option
   }
 }
