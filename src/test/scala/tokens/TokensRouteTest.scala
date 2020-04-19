@@ -13,7 +13,7 @@ import spray.json._
 
 class TokensRouteTest extends AsyncFlatSpec with Matchers with ScalaFutures with ScalatestRouteTest {
 
-  val route: Route = new TokensRoute().route
+  val route: Route = new TokensRouteDispatcher().route
 
   "POST /tokens without a uid" should "return bad request" in {
     val req = TokensRequest(1, Option(2), Option(3))
