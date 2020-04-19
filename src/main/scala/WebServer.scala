@@ -7,6 +7,6 @@ object Server extends HttpApp {
 
 object WebServer {
   def main(args: Array[String]): Unit = {
-    Server.startServer("localhost", 8081)
+    Server.startServer("localhost", 8082)
   }
 }
