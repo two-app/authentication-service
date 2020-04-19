@@ -1,8 +1,8 @@
 import akka.http.scaladsl.server.{HttpApp, Route}
-import config.MasterRoute._
+import config.MasterRoute
 
 object Server extends HttpApp {
-  override protected def routes: Route = credentialsRoute ~ tokensRoute
+  override protected def routes: Route = MasterRoute.masterRoute
 }
 
 object WebServer {
