@@ -2,7 +2,7 @@ name := "authentication-service"
 
 version := "0.1"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.13.1"
 
 /** Akka */
 libraryDependencies ++= Seq(
@@ -23,7 +23,9 @@ libraryDependencies += "org.hashids" % "hashids" % "1.0.3"
 libraryDependencies ++= Seq(
   "org.flywaydb" % "flyway-core" % "6.2.1",
   "mysql" % "mysql-connector-java" % "8.0.19",
-  "io.getquill" % "quill-async-mysql_2.12" % "3.5.0"
+
+  "org.tpolecat" %% "doobie-core" % "0.8.8",
+  "org.tpolecat" %% "doobie-hikari" % "0.8.8",
 )
 
 /** Test */
@@ -44,3 +46,6 @@ flywaySchemas += "authentication"
 
 parallelExecution in IntegrationTest := false
 parallelExecution in Test := false
+
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0"
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)

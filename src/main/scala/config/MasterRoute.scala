@@ -1,13 +1,17 @@
 package config
 
 import akka.http.scaladsl.server.Route
-import credentials.{CredentialsDao, CredentialsRoute, CredentialsService, CredentialsServiceImpl, QuillCredentialsDao}
 import tokens.TokensRoute
+import cats.effect.ContextShift
+import cats.effect.IO
+import doobie.util.ExecutionContexts
+import credentials.{CredentialsRouteDispatcher}
 
 object MasterRoute {
-  lazy val credentialsRoute: Route = new CredentialsRoute(credentialsService).route
-  lazy val tokensRoute: Route = new TokensRoute().route
+  implicit val cs: ContextShift[IO] =
+    IO.contextShift(ExecutionContexts.synchronous)
+  val services: Services[IO] = new Services[IO]()
 
-  lazy val credentialsService: CredentialsService = new CredentialsServiceImpl(credentialsDao)
-  lazy val credentialsDao: CredentialsDao = new QuillCredentialsDao()
+  val credentialsRoute: Route = new CredentialsRouteDispatcher(services.credentialsService).route
+  val tokensRoute: Route = new TokensRoute().route
 }
