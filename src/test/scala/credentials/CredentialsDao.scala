@@ -4,17 +4,15 @@ import org.scalatest.funspec.AsyncFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
 import cats.effect.IO
-import doobie.util.transactor.Transactor.Aux
-import db.TransactorUtil
 import db.FlywayHelper
+import config.MasterRoute
 
 class CredentialsDaoTest
     extends AsyncFunSpec
     with Matchers
     with BeforeAndAfterEach {
 
-  val xa: Aux[IO, Unit] = TransactorUtil.transactor()
-  val credentialsDao: CredentialsDao[IO] = new DoobieCredentialsDao[IO](xa)
+  val credentialsDao: CredentialsDao[IO] = MasterRoute.services.credentialsDao
 
   override def beforeEach(): Unit = FlywayHelper.cleanMigrate()
 
