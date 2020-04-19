@@ -40,18 +40,17 @@ class DoobieCredentialsDao[F[_]: Bracket[*[_], Throwable]](
 }
 
 object CredentialsSql {
-  def insert(cr: EncodedCredentials): ConnectionIO[Int] = {
+  def insert(cr: EncodedCredentials): ConnectionIO[Int] =
     sql"""
          | INSERT IGNORE INTO credentials (uid, password)
          | VALUES (${cr.uid}, ${cr.encodedPassword})
          |""".stripMargin.update.run
-  }
 
-  def select(uid: Int): ConnectionIO[Option[EncodedCredentials]] = {
+  def select(uid: Int): ConnectionIO[Option[EncodedCredentials]] =
     sql"""
          | SELECT uid, password
-         | FROM user
+         | FROM credentials
          | WHERE uid = $uid
          |""".stripMargin.query[EncodedCredentials].option
-  }
+
 }
