@@ -15,7 +15,7 @@ import cats.data.EitherT
 class CredentialsRouteDispatcher(credentialsService: CredentialsService[IO])
     extends RouteDispatcher {
 
-      val logger: Logger = Logger(classOf[CredentialsRouteDispatcher])
+  val logger: Logger = Logger(classOf[CredentialsRouteDispatcher])
 
   val credentialsRoute: CredentialsRoute[IO] = new CredentialsRoute(
     credentialsService
@@ -47,7 +47,7 @@ class CredentialsRouteDispatcher(credentialsService: CredentialsService[IO])
 
     onSuccess(tokensEffect.value.unsafeToFuture()) {
       case Left(error: ErrorResponse) => complete(error.status, error)
-      case Right(tokens: Tokens) => complete(tokens)
+      case Right(tokens: Tokens)      => complete(tokens)
     }
   }
 
@@ -62,30 +62,3 @@ class CredentialsRoute[F[_]](credentialsService: CredentialsService[F]) {
   }
 
 }
-
-// class CredentialsRoute(credentialsService: CredentialsService) {
-//   val logger: Logger = Logger(classOf[CredentialsRoute])
-//   val route: Route = path("credentials") {
-//     post {
-//       extractRequest { request => postCredentials(request) }
-//     }
-//   }
-
-//   def postCredentials(request: HttpRequest): Route = {
-//     logger.info("POST /credentials")
-//     entity(as[Either[ModelValidationError, UserCredentials]]) {
-//       case Left(e) =>
-//         val clientError: ErrorResponse = ClientError(e.reason)
-//         complete(clientError.status, clientError)
-//       case Right(userCredentials) => storeCredentials(userCredentials)
-//     }
-//   }
-
-//   def storeCredentials(userCredentials: UserCredentials): Route = {
-//     val encodedCredentials = EncodedCredentials(userCredentials)
-//     onSuccess(credentialsService.storeCredentials(encodedCredentials)) {
-//       case Left(e)       => complete(e.status, e)
-//       case Right(tokens) => complete(tokens)
-//     }
-//   }
-// }

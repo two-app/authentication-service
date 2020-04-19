@@ -13,5 +13,5 @@ object MasterRoute {
   val services: Services[IO] = new Services[IO]()
 
   val credentialsRoute: Route = new CredentialsRouteDispatcher(services.credentialsService).route
-  lazy val tokensRoute: Route = new TokensRoute().route
+  val tokensRoute: Route = new TokensRoute().route
 }

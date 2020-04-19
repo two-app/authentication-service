@@ -1,26 +1,40 @@
-// package credentials
+package credentials
 
-// import akka.http.scaladsl.model.{ContentTypes, HttpRequest, StatusCodes}
-// import akka.http.scaladsl.server.Route
-// import akka.http.scaladsl.testkit.ScalatestRouteTest
-// import db.FlywayHelper
-// import org.scalatest.BeforeAndAfterEach
-// import org.scalatest.concurrent.ScalaFutures
-// import org.scalatest.flatspec.AsyncFlatSpec
-// import org.scalatest.matchers.should.Matchers
-// import spray.json.DefaultJsonProtocol._
-// import spray.json._
+import org.scalatest.funspec.AsyncFunSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfterEach
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import config.MasterRoute
+import credentials.UserCredentials
+import db.FlywayHelper
+import scala.reflect.ClassTag
+import spray.json.RootJsonFormat
+import spray.json.DefaultJsonProtocol._
+class CredentialsRouteTest
+    extends AsyncFunSpec
+    with Matchers
+    with ScalatestRouteTest
+    with BeforeAndAfterEach {
 
-// class CredentialsRouteTest extends AsyncFlatSpec with Matchers with ScalaFutures with ScalatestRouteTest with BeforeAndAfterEach {
+  val route: Route = MasterRoute.credentialsRoute
 
-//   override def beforeEach(): Unit = {
-//     val flyway = FlywayHelper.getFlyway
-//     flyway.clean()
-//     flyway.migrate()
-//   }
+  override def beforeEach(): Unit = FlywayHelper.cleanMigrate()
 
-//   val route: Route = new CredentialsRoute(new CredentialsServiceImpl(new QuillCredentialsDao())).route
+  def PostCredentials[T: FromEntityUnmarshaller: ClassTag](
+      userCredentials: UserCredentials
+  ): T = {
+    implicit val UCF: RootJsonFormat[UserCredentials] =
+      jsonFormat2(UserCredentials.apply)
+    Post("/credentials", userCredentials) ~> route ~> check {
+      entityAs[T]
+    }
+  }
 
+  describe("POST /credentials") {}
+}
 //   "POST /credentials with valid credentials" should "return 200 OK" in {
 //     postCredentials(1, "testPassword") ~> route ~> check {
 //       response.status shouldBe StatusCodes.OK
