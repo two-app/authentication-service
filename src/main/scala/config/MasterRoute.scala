@@ -27,6 +27,7 @@ object MasterRoute {
 
   val masterRoute: Route = RouteDispatcher.mergeRoutes(
     credentialsRoute,
-    tokensRoute
+    tokensRoute,
+    loginRoute
   )
 }
