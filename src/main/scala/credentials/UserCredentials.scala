@@ -28,3 +28,5 @@ object UserCredentials {
     Right(UserCredentials(uid, password))
   }
 }
+
+final case class LoginCredentials(email: String, rawPassword: String)

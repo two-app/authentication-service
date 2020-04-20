@@ -9,14 +9,18 @@ import config.MasterRoute
 import response.ErrorResponse
 import response.ErrorResponse.InternalError
 import tokens.Tokens
+import user.UserServiceImpl
+import user.StubUserServiceDao
 
 class CredentialsServiceTest
     extends AnyFunSpec
     with Matchers
     with BeforeAndAfterEach {
 
-  val credentialsService: CredentialsService[IO] =
-    MasterRoute.services.credentialsService
+  val credentialsService: CredentialsService[IO] = new CredentialsServiceImpl(
+    new UserServiceImpl(new StubUserServiceDao()),
+    MasterRoute.services.credentialsDao
+  )
 
   override def beforeEach(): Unit = FlywayHelper.cleanMigrate()
 
