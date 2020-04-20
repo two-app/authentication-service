@@ -31,6 +31,16 @@ class UserServiceTest extends AnyFunSpec with Matchers with BeforeAndAfterEach {
 
       errorOrUser shouldBe Left(NotFoundError("User does not exist."))
     }
+
+    it("should return the user for a valid email") {
+      val user = User(1, Option(2), Option(3), "First", "Last")
+      stubUserDao.getUserResponse = Option(user)
+
+      val errorOrUser =
+        userService.getUser("user@two.com").value.unsafeRunSync()
+
+      errorOrUser shouldBe Right(user)
+    }
   }
 
 }
