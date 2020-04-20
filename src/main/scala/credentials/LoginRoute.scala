@@ -29,7 +29,8 @@ class LoginRouteDispatcher(credentialsService: CredentialsService[IO])
       request: HttpRequest,
       loginCredentials: LoginCredentials
   ): Route = {
-    onSuccess(loginRoute.login(loginCredentials).value.unsafeToFuture()) {
+    val tokensEffect = loginRoute.login(loginCredentials)
+    onSuccess(tokensEffect.value.unsafeToFuture()) {
       case Left(error: ErrorResponse) => complete(error.status, error)
       case Right(tokens: Tokens)      => complete(tokens)
     }
@@ -41,7 +42,8 @@ class LoginRoute[F[_]](credentialsService: CredentialsService[F]) {
 
   def login(
       loginCredentials: LoginCredentials
-  ): EitherT[F, ErrorResponse, Tokens] = 
+  ): EitherT[F, ErrorResponse, Tokens] = {
     credentialsService.loginWithCredentials(loginCredentials)
+  }
 
 }
