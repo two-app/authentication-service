@@ -23,13 +23,13 @@ import spray.json._
 import com.typesafe.scalalogging.Logger
 import akka.http.scaladsl.model.HttpMethod
 import request.ServiceClient
+import akka.http.scaladsl.model.HttpEntity
 
 trait UserDao[F[_]] {
   def getUser(email: String): OptionT[F, User]
 }
 
-class UserServiceDao[F[_]: Async](client: ServiceClient[F])
-    extends UserDao[F] {
+class UserServiceDao[F[_]: Async](client: ServiceClient[F]) extends UserDao[F] {
 
   val logger: Logger = Logger(classOf[UserServiceDao[F]])
   override def getUser(email: String): OptionT[F, User] = {
@@ -41,17 +41,21 @@ class UserServiceDao[F[_]: Async](client: ServiceClient[F])
     )
 
     OptionT(
-      client
-        .perform(req)
-        .map(res =>
-          res.status match {
-            case StatusCodes.OK       => Option(res.entity)
-            case StatusCodes.NotFound => None
-            case _                    => None
-          }
-        )
+      client.perform(req).flatMap(handleResponse)
     ).flatMap(entity => OptionT.liftF(client.unmarshal[User](entity)))
   }
+
+  private def handleResponse(res: HttpResponse): F[Option[ResponseEntity]] =
+    res.status match {
+      case StatusCodes.OK =>
+        res.entity.some.pure[F]
+      case StatusCodes.NotFound =>
+        none[ResponseEntity].pure[F]
+      case _ =>
+        Async[F].raiseError[Option[ResponseEntity]](
+          new Exception(s"Unexpected response from user-service, ${res}")
+        )
+    }
 }
 
 class UserServiceClient[F[_]: Async] extends ServiceClient[F] {

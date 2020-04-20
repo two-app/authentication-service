@@ -61,6 +61,19 @@ class UserDaoTest extends AsyncFunSpec with Matchers with BeforeAndAfterEach {
 
       maybeUser shouldBe None
     }
+
+    it("should fail for an internal server error") {
+      val stubResponse = HttpResponse(
+        status = StatusCodes.InternalServerError
+      )
+
+      client.response = stubResponse
+      val errorOrUser =
+        userDao.getUser("test@gmail.com").value.attempt.unsafeRunSync()
+
+      errorOrUser.isLeft shouldBe true
+      errorOrUser.left.get.getMessage() should startWith ("Unexpected response from user-service")
+    }
   }
 
 }
