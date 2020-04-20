@@ -8,15 +8,24 @@ import cats.effect.IO
 import config.MasterRoute
 import response.ErrorResponse
 import response.ErrorResponse.InternalError
+import response.ErrorResponse.ClientError
 import tokens.Tokens
+import user.UserServiceImpl
+import user.StubUserServiceDao
+import user.UserTestArbitraries
+import user.User
 
-class CredentialsServiceTest
+ class CredentialsServiceTest
     extends AnyFunSpec
     with Matchers
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with UserTestArbitraries {
 
-  val credentialsService: CredentialsService[IO] =
-    MasterRoute.services.credentialsService
+  val stubUserServiceDao: StubUserServiceDao[IO] = new StubUserServiceDao()
+  val credentialsService: CredentialsService[IO] = new CredentialsServiceImpl(
+    new UserServiceImpl(stubUserServiceDao),
+    MasterRoute.services.credentialsDao
+  )
 
   override def beforeEach(): Unit = FlywayHelper.cleanMigrate()
 
@@ -38,6 +47,57 @@ class CredentialsServiceTest
         credentialsService.storeCredentials(creds).value.unsafeRunSync()
 
       maybeTokens shouldBe Left(InternalError())
+    }
+  }
+
+  describe("loginWithCredentials") {
+    it("should return new tokens for a successful login") {
+      val user: User = arbitraryUser()
+      val creds = UserCredentials(user.uid, "testPassword")
+      val encodedCreds = EncodedCredentials(creds)
+      stubUserServiceDao.getUserResponse = Option(user)
+
+      credentialsService.storeCredentials(encodedCreds).value.unsafeRunSync()
+
+      val errorOrTokens = credentialsService.loginWithCredentials(
+        LoginCredentials("user@two.com", creds.password)
+      ).value.unsafeRunSync()
+
+      errorOrTokens.isRight shouldBe true
+    }
+
+    it("should fail with an invalid email") {
+      val errorOrTokens = credentialsService.loginWithCredentials(
+        LoginCredentials("bla", "rawPassword")
+      ).value.unsafeRunSync()
+
+      errorOrTokens shouldBe Left(ClientError("Invalid email."))
+    }
+
+    it("should return an internal server error if the user exists but credentials do not") {
+      val user: User = arbitraryUser()
+      stubUserServiceDao.getUserResponse = Option(user)
+
+      val errorOrTokens = credentialsService.loginWithCredentials(
+        LoginCredentials("user@two.com", "testPassword")
+      ).value.unsafeRunSync()
+
+      errorOrTokens shouldBe Left(InternalError(s"Failed to find credentials for user with UID ${user.uid}"))
+    }
+
+    it("should fail with an incorrect password") {
+      val user: User = arbitraryUser()
+      val creds = UserCredentials(user.uid, "testPassword")
+      val encodedCreds = EncodedCredentials(creds)
+      stubUserServiceDao.getUserResponse = Option(user)
+
+      credentialsService.storeCredentials(encodedCreds).value.unsafeRunSync()
+
+      val errorOrTokens = credentialsService.loginWithCredentials(
+        LoginCredentials("user@two.com", creds.password + 'z')
+      ).value.unsafeRunSync()
+
+      errorOrTokens shouldBe Left(ClientError("Invalid email/password combination."))
     }
   }
 
