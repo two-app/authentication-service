@@ -30,3 +30,7 @@ object UserCredentials {
 }
 
 final case class LoginCredentials(email: String, rawPassword: String)
+
+object LoginCredentials {
+  implicit val Format: RootJsonFormat[LoginCredentials] = jsonFormat2(LoginCredentials.apply)
+}
