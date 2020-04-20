@@ -15,15 +15,11 @@ import cats.data.OptionT
 import cats.effect.Async
 import cats.implicits._
 import config.Config
-import scala.concurrent.ExecutionContext.Implicits.{global => ec}
-import scala.concurrent.Future
-import scala.util.Success
-import scala.util.Failure
 import spray.json._
 import com.typesafe.scalalogging.Logger
 import akka.http.scaladsl.model.HttpMethod
 import request.ServiceClient
-import akka.http.scaladsl.model.HttpEntity
+import request.HttpUtils
 
 trait UserDao[F[_]] {
   def getUser(email: String): OptionT[F, User]
@@ -60,6 +56,7 @@ class UserServiceDao[F[_]: Async](client: ServiceClient[F]) extends UserDao[F] {
 
 class UserServiceClient[F[_]: Async] extends ServiceClient[F] {
 
+  val logger: Logger = Logger(classOf[UserServiceClient[F]])
   implicit val system: ActorSystem = ActorSystem()
   implicit val materialise: ActorMaterializer = ActorMaterializer()
 
@@ -68,6 +65,7 @@ class UserServiceClient[F[_]: Async] extends ServiceClient[F] {
   override def perform(request: HttpRequest): F[HttpResponse] = {
     val newUri = location + request.getUri().toString()
     val newReq = request.copy(uri = newUri)
+    logger.info(f"Performing request ${newReq}")
 
     HttpUtils.futureToF(
       Http().singleRequest(newReq)
@@ -75,18 +73,8 @@ class UserServiceClient[F[_]: Async] extends ServiceClient[F] {
   }
 
   def unmarshal[A: FromEntityUnmarshaller](response: ResponseEntity): F[A] = {
+    logger.info(f"Unmarshalling response ${response}")
     HttpUtils.futureToF(Unmarshal(response).to[A])
   }
 
-}
-
-object HttpUtils {
-  def futureToF[A, F[_]: Async](future: Future[A]): F[A] = {
-    Async[F].async { cb =>
-      future.onComplete {
-        case Success(value)     => cb(Right(value))
-        case Failure(exception) => cb(Left(exception))
-      }
-    }
-  }
 }
