@@ -30,8 +30,7 @@ class CredentialsServiceImpl[F[_]: Monad](
   override def storeCredentials(
       credentials: EncodedCredentials
   ): EitherT[F, ErrorResponse, Tokens] = {
-    EitherT
-      .right(credentialsDao.storeCredentials(credentials))
+    EitherT.right(credentialsDao.storeCredentials(credentials))
       .flatMap((affectedRows: Int) =>
         EitherT.cond(
           affectedRows == 1,
