@@ -43,4 +43,25 @@ class UserServiceTest extends AnyFunSpec with Matchers with BeforeAndAfterEach {
     }
   }
 
+  describe("getUser by UID") {
+    it("should return a not found error if the user does not exist") {
+      stubUserDao.getUserResponse = None
+
+      val errorOrUser =
+        userService.getUser(5).value.unsafeRunSync()
+
+      errorOrUser shouldBe Left(NotFoundError("User does not exist."))
+    }
+
+    it("should return the user for a valid uid") {
+      val user = User(1, Option(2), Option(3), "First", "Last")
+      stubUserDao.getUserResponse = Option(user)
+
+      val errorOrUser =
+        userService.getUser(5).value.unsafeRunSync()
+
+      errorOrUser shouldBe Right(user)
+    }
+  }
+
 }

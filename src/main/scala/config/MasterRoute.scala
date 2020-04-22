@@ -23,7 +23,9 @@ object MasterRoute {
     services.credentialsService
   ).route
 
-  val tokensRoute: Route = new TokensRouteDispatcher().route
+  val tokensRoute: Route = new TokensRouteDispatcher(
+    services.tokenService
+  ).route
 
   val masterRoute: Route = RouteDispatcher.mergeRoutes(
     credentialsRoute,

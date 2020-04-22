@@ -9,6 +9,8 @@ import cats.Monad
 
 trait UserService[F[_]] {
   def getUser(email: String): EitherT[F, ErrorResponse, User]
+
+  def getUser(uid: Int): EitherT[F, ErrorResponse, User]
 }
 
 class UserServiceImpl[F[_]: Monad](userDao: UserDao[F]) extends UserService[F] {
@@ -24,4 +26,8 @@ class UserServiceImpl[F[_]: Monad](userDao: UserDao[F]) extends UserService[F] {
       (),
       ClientError("Invalid email.")
     ).leftWiden[ErrorResponse]
+
+  override def getUser(uid: Int): EitherT[F, ErrorResponse, User] = {
+    userDao.getUser(uid).toRight(NotFoundError("User does not exist."))
+  }
 }

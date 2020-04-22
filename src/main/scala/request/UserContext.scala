@@ -20,10 +20,10 @@ object UserContext {
   }
 
   def from(request: HttpRequest): Either[ErrorResponse, UserContext] = {
-    extractToken(request).flatMap(token => this.from(token))
+    extractAuthorizationToken(request).flatMap(token => this.from(token))
   }
 
-  private def extractToken(request: HttpRequest): Either[AuthorizationError, String] = {
+  def extractAuthorizationToken(request: HttpRequest): Either[AuthorizationError, String] = {
     request.headers.find(h => h.name().equalsIgnoreCase("Authorization"))
       .map(header => header.value)
       .toRight(AuthorizationError("Authorization not provided."))

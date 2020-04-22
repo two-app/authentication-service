@@ -23,6 +23,8 @@ import request.HttpUtils
 
 trait UserDao[F[_]] {
   def getUser(email: String): OptionT[F, User]
+
+  def getUser(uid: Int): OptionT[F, User]
 }
 
 class UserServiceDao[F[_]: Async](client: ServiceClient[F]) extends UserDao[F] {
@@ -34,6 +36,19 @@ class UserServiceDao[F[_]: Async](client: ServiceClient[F]) extends UserDao[F] {
     val req = HttpRequest(
       method = HttpMethods.GET,
       uri = s"/user?email=${email}"
+    )
+
+    OptionT(
+      client.perform(req).flatMap(handleResponse)
+    ).flatMap(entity => OptionT.liftF(client.unmarshal[User](entity)))
+  }
+
+  override def getUser(uid: Int): OptionT[F, User] = {
+    logger.info(s"Retrieving user from user-service with UID ${uid}")
+
+    val req = HttpRequest(
+      method = HttpMethods.GET,
+      uri = s"/user?uid=${uid}"
     )
 
     OptionT(
