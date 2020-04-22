@@ -47,9 +47,9 @@ object AccessToken {
 }
 
 object RefreshToken {
-  private case class RefreshTokenFormat(uid: Int)
-  private implicit val RefreshTokenF: RootJsonFormat[RefreshTokenFormat] =
-    jsonFormat1(RefreshTokenFormat)
+  private case class RefreshTokenClaim(uid: Int)
+  private implicit val RefreshTokenF: RootJsonFormat[RefreshTokenClaim] =
+    jsonFormat1(RefreshTokenClaim)
 
   private val secret: String = Config.getProperty("jwt.refresh.secret")
 
@@ -74,7 +74,7 @@ object RefreshToken {
       .toEither
       .leftMap(_ => AuthorizationError("Invalid refresh token."))
       .map(claim => claim.content)
-      .map(content => Try(content.parseJson.convertTo[RefreshTokenFormat]))
+      .map(content => Try(content.parseJson.convertTo[RefreshTokenClaim]))
       .flatMap(attemptedContent => {
         attemptedContent.toEither
           .leftMap(_ => InternalError("Failed to decode valid token."))
