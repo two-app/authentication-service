@@ -72,7 +72,63 @@ class UserDaoTest extends AsyncFunSpec with Matchers with BeforeAndAfterEach {
         userDao.getUser("test@gmail.com").value.attempt.unsafeRunSync()
 
       errorOrUser.isLeft shouldBe true
-      errorOrUser.left.get.getMessage() should startWith ("Unexpected response from user-service")
+      errorOrUser.left.get.getMessage() should startWith(
+        "Unexpected response from user-service"
+      )
+    }
+  }
+
+  describe("getUser by UID") {
+    it("should form the correct http request") {
+      val uid = 5
+      userDao.getUser(uid).value.unsafeRunSync()
+
+      client.lastRequest shouldBe HttpRequest(
+        method = HttpMethods.GET,
+        uri = s"/user?uid=${uid}"
+      )
+    }
+
+    it("should correctly map the response entity to user") {
+      val responseUser =
+        User(5, Option(2), Option(3), "First Name", "Last Name")
+      val responseJson = responseUser.toJson.compactPrint
+
+      val response = HttpResponse(
+        status = StatusCodes.OK,
+        entity = HttpEntity(ContentTypes.`application/json`, responseJson)
+      )
+
+      client.response = response
+      val maybeUser = userDao.getUser(5).value.unsafeRunSync()
+
+      maybeUser shouldBe Option(responseUser)
+    }
+
+    it("should return None for a 404 response") {
+      val stubResponse = HttpResponse(
+        status = StatusCodes.NotFound
+      )
+
+      client.response = stubResponse
+      val maybeUser = userDao.getUser(5).value.unsafeRunSync()
+
+      maybeUser shouldBe None
+    }
+
+    it("should fail for an internal server error") {
+      val stubResponse = HttpResponse(
+        status = StatusCodes.InternalServerError
+      )
+
+      client.response = stubResponse
+      val errorOrUser =
+        userDao.getUser(5).value.attempt.unsafeRunSync()
+
+      errorOrUser.isLeft shouldBe true
+      errorOrUser.left.get.getMessage() should startWith(
+        "Unexpected response from user-service"
+      )
     }
   }
 

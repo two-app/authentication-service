@@ -13,6 +13,8 @@ import user.UserDao
 import user.UserServiceDao
 import user.UserService
 import user.UserServiceImpl
+import tokens.TokenService
+import tokens.TokenServiceImpl
 
 class Services[F[_]: Sync: Async: ContextShift] {
 
@@ -26,5 +28,9 @@ class Services[F[_]: Sync: Async: ContextShift] {
   val credentialsService: CredentialsService[F] = new CredentialsServiceImpl[F](
     userService,
     credentialsDao
+  )
+
+  val tokenService: TokenService[F] = new TokenServiceImpl[F](
+    userService
   )
 }
