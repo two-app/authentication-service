@@ -5,7 +5,8 @@ TokensRequest(uid: Int, pid: Option[Int], cid: Option[Int])
 ## Endpoints
 | Verb | Endpoint | Description                     | Input                                  | Output            |
 |------|----------|---------------------------------|----------------------------------------|-------------------|
-| POST | `/tokens`  | Generate new tokens.            | [Tokens Request](#Tokens-Request) | [Tokens](#Tokens), ClientError |
+| POST | `/tokens` | Generate new tokens.           | [Tokens Request](#Tokens-Request) | [Tokens](#Tokens), ClientError |
+| POST | `/refresh` | Generate a new access token.  | Refresh token in `Authorization` header with `Bearer`. | String access token, Authorization Error |
 
 ## Models
 ### Tokens Request
