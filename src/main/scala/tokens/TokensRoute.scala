@@ -7,6 +7,9 @@ import com.typesafe.scalalogging.Logger
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import request.RouteDispatcher
+import akka.http.javadsl.model.HttpRequest
+import cats.data.EitherT
+import response.ErrorResponse
 
 case class TokensRequest(uid: Int, pid: Option[Int], cid: Option[Int])
 
@@ -20,11 +23,18 @@ class TokensRouteDispatcher extends RouteDispatcher {
 
   val logger: Logger = Logger(classOf[TokensRouteDispatcher])
   val route: Route = extractRequest { request =>
-    path("tokens") {
-      post {
-        entity(as[TokensRequest]) { entity => handlePostTokens(entity) }
+    concat(
+      path("tokens") {
+        post {
+          entity(as[TokensRequest]) { entity => handlePostTokens(entity) }
+        }
+      },
+      path("refresh") {
+        post {
+          handlePostRefresh(request)
+        }
       }
-    }
+    )
   }
 
   def handlePostTokens(tokensRequest: TokensRequest): Route = {
@@ -32,6 +42,19 @@ class TokensRouteDispatcher extends RouteDispatcher {
     complete(
       Tokens(tokensRequest.uid, tokensRequest.pid, tokensRequest.cid)
     )
+  }
+
+  def handlePostRefresh(request: HttpRequest): Route = {
+    logger.info("POST /refresh")
+    ???
+  }
+
+}
+
+class TokensRoute[F[_]](tokenService: TokenService[F]) {
+
+  def refreshToken(refreshToken: String): EitherT[F, ErrorResponse, String] = {
+    tokenService.refreshAccessToken(refreshToken)
   }
 
 }
