@@ -50,3 +50,5 @@ parallelExecution in Test := false
 
 libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0"
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
+
+dockerRepository := Option("docker.pkg.github.com/two-app")

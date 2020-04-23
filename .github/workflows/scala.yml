@@ -37,5 +37,5 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Publish new docker image locally
-        run: sbt docker:publishLocal
+      - name: Publish new Image
+        run: sbt docker:publish
