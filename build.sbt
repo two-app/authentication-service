@@ -52,3 +52,4 @@ libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0"
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
 dockerRepository := Some("docker.pkg.github.com/two-app/authentication-service")
+dockerUpdateLatest := true
