@@ -4,17 +4,18 @@ import org.scalatest.funspec.AsyncFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
 import cats.effect.IO
-import db.FlywayHelper
+import db.DatabaseTestMixin
 import config.MasterRoute
 
 class CredentialsDaoTest
     extends AsyncFunSpec
     with Matchers
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with DatabaseTestMixin {
 
-  val credentialsDao: CredentialsDao[IO] = MasterRoute.services.credentialsDao
+  val credentialsDao: CredentialsDao[IO] = new MasterRoute(xa).services.credentialsDao
 
-  override def beforeEach(): Unit = FlywayHelper.cleanMigrate()
+  override def beforeEach(): Unit = cleanMigrate()
 
   describe("storeCredentials") {
     it("should store a new uid password pair") {

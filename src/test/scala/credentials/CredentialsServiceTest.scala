@@ -3,7 +3,7 @@ package credentials
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
-import db.FlywayHelper
+import db.DatabaseTestMixin
 import cats.effect.IO
 import config.MasterRoute
 import response.ErrorResponse
@@ -19,15 +19,16 @@ import user.User
     extends AnyFunSpec
     with Matchers
     with BeforeAndAfterEach
-    with UserTestArbitraries {
+    with UserTestArbitraries
+    with DatabaseTestMixin {
 
   val stubUserServiceDao: StubUserServiceDao[IO] = new StubUserServiceDao()
   val credentialsService: CredentialsService[IO] = new CredentialsServiceImpl(
     new UserServiceImpl(stubUserServiceDao),
-    MasterRoute.services.credentialsDao
+    new MasterRoute(xa).services.credentialsDao
   )
 
-  override def beforeEach(): Unit = FlywayHelper.cleanMigrate()
+  override def beforeEach(): Unit = cleanMigrate()
 
   describe("storeCredentials") {
     it("should return new tokens for valid credentials") {

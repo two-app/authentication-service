@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import config.MasterRoute
 import credentials.UserCredentials
-import db.FlywayHelper
+import db.DatabaseTestMixin
 import scala.reflect.ClassTag
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
@@ -23,11 +23,12 @@ class CredentialsRouteTest
     with Matchers
     with ScalatestRouteTest
     with BeforeAndAfterEach
-    with RequestTestArbitraries {
+    with RequestTestArbitraries
+    with DatabaseTestMixin {
 
-  val route: Route = MasterRoute.credentialsRoute
+  val route: Route = new MasterRoute(xa).credentialsRoute
 
-  override def beforeEach(): Unit = FlywayHelper.cleanMigrate()
+  override def beforeEach(): Unit = cleanMigrate()
 
   def PostCredentials[T: FromEntityUnmarshaller: ClassTag](
       userCredentials: UserCredentials

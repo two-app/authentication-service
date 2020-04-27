@@ -8,12 +8,10 @@ import credentials.CredentialsRouteDispatcher
 import tokens.TokensRouteDispatcher
 import request.RouteDispatcher
 import credentials.LoginRouteDispatcher
+import doobie.util.transactor.Transactor
 
-object MasterRoute {
-  implicit val cs: ContextShift[IO] =
-    IO.contextShift(ExecutionContexts.synchronous)
-
-  val services: Services[IO] = new Services[IO]()
+class MasterRoute(xa: Transactor[IO]) {
+  val services: Services[IO] = new Services[IO](xa)
 
   val credentialsRoute: Route = new CredentialsRouteDispatcher(
     services.credentialsService
