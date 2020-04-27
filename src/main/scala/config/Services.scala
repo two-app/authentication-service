@@ -15,11 +15,9 @@ import user.UserService
 import user.UserServiceImpl
 import tokens.TokenService
 import tokens.TokenServiceImpl
+import doobie.util.transactor.Transactor
 
-class Services[F[_]: Sync: Async: ContextShift] {
-
-  val xa: Aux[F, Unit] = db.transactor[F]()
-
+class Services[F[_]: Async](xa: Transactor[F]) {
   val userServiceClient: ServiceClient[F] = new UserServiceClient[F]()
   val userDao: UserDao[F] = new UserServiceDao[F](userServiceClient)
   val userService: UserService[F] = new UserServiceImpl[F](userDao)

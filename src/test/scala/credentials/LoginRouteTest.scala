@@ -8,7 +8,7 @@ import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Directives._
-import db.FlywayHelper
+import db.DatabaseTestMixin
 import request.RequestTestArbitraries
 import scala.reflect.ClassTag
 import config.MasterRoute
@@ -28,19 +28,20 @@ class LoginRouteTest
     with ScalatestRouteTest
     with BeforeAndAfterEach
     with RequestTestArbitraries
-    with UserTestArbitraries {
+    with UserTestArbitraries
+    with DatabaseTestMixin {
 
   var stubUserService: StubUserServiceDao[IO] = _
   var route: Route = _
   override def beforeEach(): Unit = {
-    FlywayHelper.cleanMigrate()
+    cleanMigrate()
     stubUserService = new StubUserServiceDao()
     route = (new LoginRouteDispatcher(
       new CredentialsServiceImpl[IO](
         new UserServiceImpl(stubUserService),
-        MasterRoute.services.credentialsDao
+        new MasterRoute(xa).services.credentialsDao
       )
-    ).route) ~ MasterRoute.credentialsRoute
+    ).route) ~ new MasterRoute(xa).credentialsRoute
   }
 
   def PostLogin[T: FromEntityUnmarshaller: ClassTag](
