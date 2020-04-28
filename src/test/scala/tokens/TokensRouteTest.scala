@@ -7,7 +7,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import config.MasterRoute
+import config.TestServices
 import db.FlywayHelper
 import request.RequestTestArbitraries
 import scala.reflect.ClassTag
@@ -34,14 +34,9 @@ class TokensRouteTest
   var route: Route = _
 
   override def beforeEach(): Unit = {
-    stubUserDao = new StubUserServiceDao()
-    route = new TokensRouteDispatcher(
-      new TokenServiceImpl[IO](
-        new UserServiceImpl(
-          stubUserDao
-        )
-      )
-    ).route
+    val services = new TestServices()
+    stubUserDao = services.stubUserDao
+    route = services.masterRoute
   }
 
   def PostTokens[T: FromEntityUnmarshaller: ClassTag](

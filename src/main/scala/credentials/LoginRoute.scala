@@ -9,11 +9,14 @@ import request.RouteDispatcher
 import cats.data.EitherT
 import response.ErrorResponse
 import tokens.Tokens
+import cats.effect.ConcurrentEffect
+import com.typesafe.scalalogging.Logger
 
-class LoginRouteDispatcher(credentialsService: CredentialsService[IO])
-    extends RouteDispatcher {
+class LoginRouteDispatcher[F[_]: ConcurrentEffect](
+    credentialsService: CredentialsService[F]
+) extends RouteDispatcher {
 
-  val loginRoute: LoginRoute[IO] = new LoginRoute(credentialsService)
+  implicit val logger: Logger = Logger[LoginRouteDispatcher[F]]
 
   override val route: Route = extractRequest { request =>
     path("login") {
@@ -29,21 +32,10 @@ class LoginRouteDispatcher(credentialsService: CredentialsService[IO])
       request: HttpRequest,
       loginCredentials: LoginCredentials
   ): Route = {
-    val tokensEffect = loginRoute.login(loginCredentials)
-    onSuccess(tokensEffect.value.unsafeToFuture()) {
-      case Left(error: ErrorResponse) => complete(error.status, error)
-      case Right(tokens: Tokens)      => complete(tokens)
-    }
-  }
-
-}
-
-class LoginRoute[F[_]](credentialsService: CredentialsService[F]) {
-
-  def login(
-      loginCredentials: LoginCredentials
-  ): EitherT[F, ErrorResponse, Tokens] = {
-    credentialsService.loginWithCredentials(loginCredentials)
+    logger.info(s"POST /login with email ${loginCredentials.email}")
+    completeEffectfulEither(
+      credentialsService.loginWithCredentials(loginCredentials)
+    )
   }
 
 }
