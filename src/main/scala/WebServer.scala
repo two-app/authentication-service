@@ -12,7 +12,7 @@ import com.zaxxer.hikari.HikariConfig
 import db.DatabaseConfig
 import com.typesafe.scalalogging.Logger
 
-class Server[F[_]: ConcurrentEffect](xa: Transactor[F]) extends HttpApp {
+class Server[F[_]: Timer : ConcurrentEffect](xa: Transactor[F]) extends HttpApp {
   override protected def routes: Route = new Services(xa).masterRoute
 }
 

@@ -22,21 +22,29 @@ import credentials.LoginRouteDispatcher
 import tokens.TokensRouteDispatcher
 import akka.http.scaladsl.server.Route
 import request.RouteDispatcher
+import health.HealthDao
+import health.DoobieHealthDao
+import health.HealthService
+import health.HealthServiceImpl
+import health.HealthRouteDispatcher
+import cats.effect.Timer
 
-class Services[F[_]: Async: ConcurrentEffect](xa: Transactor[F]) {
-  val userServiceClient: ServiceClient[F] = new UserServiceClient[F]()
+class Services[F[_]: Async: Timer: ConcurrentEffect](xa: Transactor[F]) {
+  val userServiceClient: ServiceClient[F] = new UserServiceClient()
 
-  val userDao: UserDao[F] = new UserServiceDao[F](userServiceClient)
-  val credentialsDao: CredentialsDao[F] = new DoobieCredentialsDao[F](xa)
+  val userDao: UserDao[F] = new UserServiceDao(userServiceClient)
+  val credentialsDao: CredentialsDao[F] = new DoobieCredentialsDao(xa)
+  val healthDao: HealthDao[F] = new DoobieHealthDao(xa)
 
-  val userService: UserService[F] = new UserServiceImpl[F](userDao)
-  val credentialsService: CredentialsService[F] = new CredentialsServiceImpl[F](
+  val userService: UserService[F] = new UserServiceImpl(userDao)
+  val credentialsService: CredentialsService[F] = new CredentialsServiceImpl(
     userService,
     credentialsDao
   )
-  val tokenService: TokenService[F] = new TokenServiceImpl[F](
+  val tokenService: TokenService[F] = new TokenServiceImpl(
     userService
   )
+  val healthService: HealthService[F] = new HealthServiceImpl(healthDao)
 
   val credentialsRouteDispatcher: CredentialsRouteDispatcher[F] =
     new CredentialsRouteDispatcher(
@@ -47,6 +55,9 @@ class Services[F[_]: Async: ConcurrentEffect](xa: Transactor[F]) {
   )
   val tokensRouteDispatcher: TokensRouteDispatcher[F] = new TokensRouteDispatcher(
     tokenService
+  )
+  val healthRouteDispatcher: HealthRouteDispatcher[F] = new HealthRouteDispatcher(
+    healthService
   )
 
   val masterRoute: Route = RouteDispatcher.mergeDispatchers(
