@@ -41,11 +41,11 @@ spec:
             secretKeyRef:
               name: db-user-pass
               key: password
-         readinessProbe:
-           httpGet:
-             path: /health
-             port: 8080
-           initialDelaySeconds: 30 
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30 
       imagePullSecrets:
       - name: regcred
 ---
