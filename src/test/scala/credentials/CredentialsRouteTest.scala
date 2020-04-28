@@ -7,7 +7,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import config.MasterRoute
+import config.TestServices
 import credentials.UserCredentials
 import db.DatabaseTestMixin
 import scala.reflect.ClassTag
@@ -26,7 +26,7 @@ class CredentialsRouteTest
     with RequestTestArbitraries
     with DatabaseTestMixin {
 
-  val route: Route = new MasterRoute(xa).credentialsRoute
+  val route: Route = new TestServices().masterRoute
 
   override def beforeEach(): Unit = cleanMigrate()
 

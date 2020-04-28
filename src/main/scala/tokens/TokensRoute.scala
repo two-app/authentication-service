@@ -13,6 +13,7 @@ import cats.effect.IO
 import response.ErrorResponse
 import request.UserContext
 import response.ErrorResponse.AuthorizationError
+import cats.effect.ConcurrentEffect
 
 case class TokensRequest(uid: Int, pid: Option[Int], cid: Option[Int])
 
@@ -22,10 +23,11 @@ object TokensRequest {
   )
 }
 
-class TokensRouteDispatcher(tokenService: TokenService[IO])
-    extends RouteDispatcher {
+class TokensRouteDispatcher[F[_]: ConcurrentEffect](
+    tokenService: TokenService[F]
+) extends RouteDispatcher {
 
-  val logger: Logger = Logger(classOf[TokensRouteDispatcher])
+  implicit val logger: Logger = Logger[TokensRouteDispatcher[F]]
   val route: Route = extractRequest { request =>
     concat(
       path("tokens") {
@@ -52,24 +54,15 @@ class TokensRouteDispatcher(tokenService: TokenService[IO])
     logger.info("POST /refresh")
 
     val accessTokenEffect = (for {
-      refreshToken <- EitherT.fromEither[IO](
+      refreshToken <- EitherT.fromEither[F](
         UserContext.extractAuthorizationToken(request)
       )
       accessToken <- tokenService.refreshAccessToken(refreshToken)
-    } yield accessToken).leftMap[ErrorResponse](_ => AuthorizationError("Failed to authorize user."))
+    } yield accessToken).leftMap[ErrorResponse](_ =>
+      AuthorizationError("Failed to authorize user.")
+    )
 
-    onSuccess(accessTokenEffect.value.unsafeToFuture()) {
-      case Left(error: ErrorResponse) => complete(error.status, error)
-      case Right(accessToken: String) => complete(accessToken)
-    }
-  }
-
-}
-
-class TokensRoute[F[_]](tokenService: TokenService[F]) {
-
-  def refreshToken(refreshToken: String): EitherT[F, ErrorResponse, String] = {
-    tokenService.refreshAccessToken(refreshToken)
+    completeEffectfulEither(accessTokenEffect)
   }
 
 }

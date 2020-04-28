@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
 import cats.effect.IO
 import db.DatabaseTestMixin
-import config.MasterRoute
+import config.TestServices
 
 class CredentialsDaoTest
     extends AsyncFunSpec
@@ -13,7 +13,7 @@ class CredentialsDaoTest
     with BeforeAndAfterEach
     with DatabaseTestMixin {
 
-  val credentialsDao: CredentialsDao[IO] = new MasterRoute(xa).services.credentialsDao
+  val credentialsDao: CredentialsDao[IO] = new TestServices().credentialsDao
 
   override def beforeEach(): Unit = cleanMigrate()
 

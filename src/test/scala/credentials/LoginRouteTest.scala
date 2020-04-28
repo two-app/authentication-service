@@ -11,7 +11,7 @@ import akka.http.scaladsl.server.Directives._
 import db.DatabaseTestMixin
 import request.RequestTestArbitraries
 import scala.reflect.ClassTag
-import config.MasterRoute
+import config.TestServices
 import user.UserServiceImpl
 import user.StubUserServiceDao
 import cats.effect.IO
@@ -31,17 +31,13 @@ class LoginRouteTest
     with UserTestArbitraries
     with DatabaseTestMixin {
 
-  var stubUserService: StubUserServiceDao[IO] = _
+  var stubUserDao: StubUserServiceDao[IO] = _
   var route: Route = _
   override def beforeEach(): Unit = {
     cleanMigrate()
-    stubUserService = new StubUserServiceDao()
-    route = (new LoginRouteDispatcher(
-      new CredentialsServiceImpl[IO](
-        new UserServiceImpl(stubUserService),
-        new MasterRoute(xa).services.credentialsDao
-      )
-    ).route) ~ new MasterRoute(xa).credentialsRoute
+    val services = new TestServices()
+    stubUserDao = services.stubUserDao
+    route = services.masterRoute
   }
 
   def PostLogin[T: FromEntityUnmarshaller: ClassTag](
@@ -62,7 +58,7 @@ class LoginRouteTest
 
   it("should return tokens for a valid login") {
     val user = arbitraryUser()
-    stubUserService.getUserResponse = Option(user)
+    stubUserDao.getUserResponse = Option(user)
 
     PostCredentials[Tokens](UserCredentials(user.uid, "testPassword"))
     val tokens = PostLogin[Tokens](
@@ -82,7 +78,7 @@ class LoginRouteTest
 
   it("should return a bad request for an invalid email/password combo") {
     val user = arbitraryUser()
-    stubUserService.getUserResponse = Option(user)
+    stubUserDao.getUserResponse = Option(user)
 
     PostCredentials[Tokens](UserCredentials(user.uid, "testPassword"))
     val response = PostLogin[ErrorResponse](

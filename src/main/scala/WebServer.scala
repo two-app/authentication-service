@@ -1,6 +1,6 @@
 import akka.http.scaladsl.server.{HttpApp, Route}
 import cats.effect.{ExitCode, IO, IOApp}
-import config.MasterRoute
+import config.Services
 import config.Config
 import db.FlywayHelper
 import cats.effect._
@@ -12,8 +12,8 @@ import com.zaxxer.hikari.HikariConfig
 import db.DatabaseConfig
 import com.typesafe.scalalogging.Logger
 
-class Server(xa: Transactor[IO]) extends HttpApp {
-  override protected def routes: Route = new MasterRoute(xa).masterRoute
+class Server[F[_]: ConcurrentEffect](xa: Transactor[F]) extends HttpApp {
+  override protected def routes: Route = new Services(xa).masterRoute
 }
 
 object WebServer extends IOApp {

@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterEach
 import db.DatabaseTestMixin
 import cats.effect.IO
-import config.MasterRoute
+import config.TestServices
 import response.ErrorResponse
 import response.ErrorResponse.InternalError
 import response.ErrorResponse.ClientError
@@ -22,11 +22,9 @@ import user.User
     with UserTestArbitraries
     with DatabaseTestMixin {
 
-  val stubUserServiceDao: StubUserServiceDao[IO] = new StubUserServiceDao()
-  val credentialsService: CredentialsService[IO] = new CredentialsServiceImpl(
-    new UserServiceImpl(stubUserServiceDao),
-    new MasterRoute(xa).services.credentialsDao
-  )
+  val services: TestServices = new TestServices()
+  val stubUserDao: StubUserServiceDao[IO] = services.stubUserDao
+  val credentialsService: CredentialsService[IO] = services.credentialsService
 
   override def beforeEach(): Unit = cleanMigrate()
 
@@ -56,7 +54,7 @@ import user.User
       val user: User = arbitraryUser()
       val creds = UserCredentials(user.uid, "testPassword")
       val encodedCreds = EncodedCredentials(creds)
-      stubUserServiceDao.getUserResponse = Option(user)
+      stubUserDao.getUserResponse = Option(user)
 
       credentialsService.storeCredentials(encodedCreds).value.unsafeRunSync()
 
@@ -77,7 +75,7 @@ import user.User
 
     it("should return an internal server error if the user exists but credentials do not") {
       val user: User = arbitraryUser()
-      stubUserServiceDao.getUserResponse = Option(user)
+      stubUserDao.getUserResponse = Option(user)
 
       val errorOrTokens = credentialsService.loginWithCredentials(
         LoginCredentials("user@two.com", "testPassword")
@@ -90,7 +88,7 @@ import user.User
       val user: User = arbitraryUser()
       val creds = UserCredentials(user.uid, "testPassword")
       val encodedCreds = EncodedCredentials(creds)
-      stubUserServiceDao.getUserResponse = Option(user)
+      stubUserDao.getUserResponse = Option(user)
 
       credentialsService.storeCredentials(encodedCreds).value.unsafeRunSync()
 

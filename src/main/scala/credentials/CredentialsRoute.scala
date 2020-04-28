@@ -11,15 +11,13 @@ import response.ErrorResponse.ClientError
 import request.RouteDispatcher
 import tokens.Tokens
 import cats.data.EitherT
+import cats.effect.ConcurrentEffect
+import cats.implicits._
 
-class CredentialsRouteDispatcher(credentialsService: CredentialsService[IO])
+class CredentialsRouteDispatcher[F[_] : ConcurrentEffect](credentialsService: CredentialsService[F])
     extends RouteDispatcher {
 
-  val logger: Logger = Logger(classOf[CredentialsRouteDispatcher])
-
-  val credentialsRoute: CredentialsRoute[IO] = new CredentialsRoute(
-    credentialsService
-  )
+  implicit val logger: Logger = Logger[CredentialsRouteDispatcher[F]]
 
   override val route: Route = extractRequest { request =>
     path("credentials") {
@@ -40,25 +38,12 @@ class CredentialsRouteDispatcher(credentialsService: CredentialsService[IO])
       maybeCredentials: Either[ModelValidationError, UserCredentials]
   ): Route = {
     logger.info("POST /credentials")
-    val tokensEffect: EitherT[IO, ErrorResponse, Tokens] = EitherT
-      .fromEither[IO](maybeCredentials)
-      .leftMap[ErrorResponse](e => ClientError(e.reason))
-      .flatMap(credentialsRoute.storeCredentials)
+    val tokensEffect = for {
+      credentials <- maybeCredentials.toEitherT[F].leftMap(e => ClientError(e.reason))
+      tokens <- credentialsService.storeCredentials(EncodedCredentials(credentials))
+    } yield tokens
 
-    onSuccess(tokensEffect.value.unsafeToFuture()) {
-      case Left(error: ErrorResponse) => complete(error.status, error)
-      case Right(tokens: Tokens)      => complete(tokens)
-    }
-  }
-
-}
-
-class CredentialsRoute[F[_]](credentialsService: CredentialsService[F]) {
-
-  def storeCredentials(
-      userCredentials: UserCredentials
-  ): EitherT[F, ErrorResponse, Tokens] = {
-    credentialsService.storeCredentials(EncodedCredentials(userCredentials))
+    completeEffectfulEither(tokensEffect)
   }
 
 }
