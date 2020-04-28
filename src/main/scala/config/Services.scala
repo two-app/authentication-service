@@ -63,6 +63,7 @@ class Services[F[_]: Async: Timer: ConcurrentEffect](xa: Transactor[F]) {
   val masterRoute: Route = RouteDispatcher.mergeDispatchers(
     credentialsRouteDispatcher,
     loginRouteDispatcher,
-    tokensRouteDispatcher
+    tokensRouteDispatcher,
+    healthRouteDispatcher
   )
 }
