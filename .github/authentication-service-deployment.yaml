@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: authentication-service
-        image: docker.pkg.github.com/two-app/authentication-service/authentication-service:0.1.13
+        image: docker.pkg.github.com/two-app/authentication-service/authentication-service:0.1.14
         ports:
         - containerPort: 8080
         env:
@@ -25,6 +25,8 @@ spec:
           value: "8080"
         - name: SERVER_HOST
           value: "0.0.0.0"
+        - name: SERVICE_USER_LOCATION
+          value: "http://user-service:8080"
         - name: JDBC_URL
           value: "jdbc:mysql://authentication-service-rds/authentication"
         - name: JDBC_URL_WITHOUT_SCHEMA
@@ -39,11 +41,11 @@ spec:
             secretKeyRef:
               name: db-user-pass
               key: password
-#          readinessProbe:
-#            httpGet:
-#              path: /health
-#              port: 8080
-#            initialDelaySeconds: 30 
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30 
       imagePullSecrets:
       - name: regcred
 ---
