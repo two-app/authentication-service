@@ -6,7 +6,7 @@ metadata:
   labels:
     app: authentication-service
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: authentication-service
@@ -29,12 +29,12 @@ spec:
           value: "http://user-service:8080"
         - name: JDBC_URL
           value: "jdbc:mysql://authentication-service-rds:3306"
-        - name: JDBC_USERNAME
+        - name: DB_USERNAME
           valueFrom:
             secretKeyRef:
               name: authentication-service-db-user-pass
               key: username
-        - name: JDBC_PASSWORD
+        - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: authentication-service-db-user-pass
