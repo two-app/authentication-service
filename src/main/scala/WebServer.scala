@@ -24,7 +24,7 @@ object WebServer extends IOApp {
   lazy val transactor: Resource[IO, HikariTransactor[IO]] =
     for {
       ce <- ExecutionContexts.fixedThreadPool[IO](
-        Config.load().getInt("db.connectionPoolSize")
+        DatabaseConfig.connectionPoolSize
       )
       be <- Blocker[IO]
       ds <- createDataSourceResource[IO]()
@@ -55,6 +55,7 @@ object WebServer extends IOApp {
     hikariConfig.setJdbcUrl(DatabaseConfig.jdbcWithSchema)
     hikariConfig.setUsername(DatabaseConfig.username)
     hikariConfig.setPassword(DatabaseConfig.password)
+    hikariConfig.setMaximumPoolSize(DatabaseConfig.connectionPoolSize)
 
     logger.info(s"Connecting to JDBC URL: ${DatabaseConfig.jdbcWithSchema} with username ${DatabaseConfig.username}.")
 
