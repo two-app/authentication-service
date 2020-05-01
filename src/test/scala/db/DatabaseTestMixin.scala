@@ -22,7 +22,7 @@ trait DatabaseTestMixin {
   val flyway: Flyway = Flyway
     .configure()
     .dataSource(
-      DatabaseConfig.jdbcWithoutSchema,
+      DatabaseConfig.jdbc,
       DatabaseConfig.username,
       DatabaseConfig.password
     )
