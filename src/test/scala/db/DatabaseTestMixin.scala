@@ -13,7 +13,7 @@ trait DatabaseTestMixin {
 
   val xa: Transactor[IO] = Transactor.fromDriverManager[IO](
     DatabaseConfig.driver,
-    DatabaseConfig.jdbc,
+    DatabaseConfig.jdbcWithSchema,
     DatabaseConfig.username,
     DatabaseConfig.password,
     Blocker.liftExecutionContext(ExecutionContexts.synchronous)
