@@ -20,20 +20,21 @@ object WebServer extends IOApp {
 
   val logger: Logger = Logger("WebServer")
 
-  // loads JDBC connection pool and applies flyway migrations
-  val transactor: Resource[IO, HikariTransactor[IO]] =
+  // loads JDBC connection pool
+  lazy val transactor: Resource[IO, HikariTransactor[IO]] =
     for {
       ce <- ExecutionContexts.fixedThreadPool[IO](
         Config.load().getInt("db.connectionPoolSize")
       )
       be <- Blocker[IO]
       ds <- createDataSourceResource[IO]()
-      _ <- Resource.liftF(IO(FlywayHelper.migrate(ds)))
       xa = HikariTransactor[IO](ds, ce, be)
     } yield xa
 
   override def run(args: List[String]): IO[ExitCode] = {
-    logger.info("Application started up. Loading Transactor...")
+    logger.info("Application started up. Applying migrations...")
+    FlywayHelper.migrate()
+    logger.info("Finished migrating. Loading transactor...")
     transactor.use { xa =>
       logger.info("Transactor successfully loaded.")
       val host: String = Config.load().getString("server.host")
@@ -51,9 +52,11 @@ object WebServer extends IOApp {
       : Resource[M, HikariDataSource] = {
     val hikariConfig = new HikariConfig()
     hikariConfig.setDriverClassName(DatabaseConfig.driver)
-    hikariConfig.setJdbcUrl(DatabaseConfig.jdbc)
+    hikariConfig.setJdbcUrl(DatabaseConfig.jdbcWithSchema)
     hikariConfig.setUsername(DatabaseConfig.username)
     hikariConfig.setPassword(DatabaseConfig.password)
+
+    logger.info(s"Connecting to JDBC URL: ${DatabaseConfig.jdbcWithSchema} with username ${DatabaseConfig.username}.")
 
     val alloc = Sync[M].delay(new HikariDataSource(hikariConfig))
     val free = (ds: HikariDataSource) => Sync[M].delay(ds.close())
