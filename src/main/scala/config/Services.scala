@@ -1,35 +1,15 @@
 package config
 
-import cats.effect.ContextShift
-import cats.effect.Sync
-import cats.effect.Async
-
-import doobie.util.transactor.Transactor.Aux
-import credentials.{CredentialsDao, DoobieCredentialsDao}
-import credentials.{CredentialsService, CredentialsServiceImpl}
-import request.ServiceClient
-import user.UserServiceClient
-import user.UserDao
-import user.UserServiceDao
-import user.UserService
-import user.UserServiceImpl
-import tokens.TokenService
-import tokens.TokenServiceImpl
-import doobie.util.transactor.Transactor
-import credentials.CredentialsRouteDispatcher
-import cats.effect.ConcurrentEffect
-import credentials.LoginRouteDispatcher
-import tokens.TokensRouteDispatcher
 import akka.http.scaladsl.server.Route
-import request.RouteDispatcher
-import health.HealthDao
-import health.DoobieHealthDao
-import health.HealthService
-import health.HealthServiceImpl
-import health.HealthRouteDispatcher
-import cats.effect.Timer
+import cats.effect.{Async, ConcurrentEffect, Timer}
+import credentials._
+import doobie.util.transactor.Transactor
+import health._
+import request.{RouteDispatcher, ServiceClient}
+import tokens.{TokenService, TokenServiceImpl, TokensRouteDispatcher}
+import user._
 
-class Services[F[_]: Async: Timer: ConcurrentEffect](xa: Transactor[F]) {
+class Services[F[_] : Async : Timer : ConcurrentEffect](xa: Transactor[F]) {
   val userServiceClient: ServiceClient[F] = new UserServiceClient()
 
   val userDao: UserDao[F] = new UserServiceDao(userServiceClient)
