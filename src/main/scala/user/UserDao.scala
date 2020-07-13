@@ -1,25 +1,16 @@
 package user
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.HttpMethods
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.ResponseEntity
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshal}
 import cats.data.OptionT
 import cats.effect.Async
 import cats.implicits._
-import config.Config
-import spray.json._
 import com.typesafe.scalalogging.Logger
-import akka.http.scaladsl.model.HttpMethod
-import request.ServiceClient
-import request.HttpUtils
+import config.Config
+import config.RootActorSystem._
+import request.{HttpUtils, ServiceClient}
 
 trait UserDao[F[_]] {
   def getUser(email: String): OptionT[F, User]
@@ -27,15 +18,16 @@ trait UserDao[F[_]] {
   def getUser(uid: Int): OptionT[F, User]
 }
 
-class UserServiceDao[F[_]: Async](client: ServiceClient[F]) extends UserDao[F] {
+class UserServiceDao[F[_] : Async](client: ServiceClient[F]) extends UserDao[F] {
 
   val logger: Logger = Logger(classOf[UserServiceDao[F]])
+
   override def getUser(email: String): OptionT[F, User] = {
-    logger.info(s"Retrieving user from user-service with email ${email}")
+    logger.info(s"Retrieving user from user-service with email $email")
 
     val req = HttpRequest(
       method = HttpMethods.GET,
-      uri = s"/user?email=${email}"
+      uri = s"/user?email=$email"
     )
 
     OptionT(
@@ -44,11 +36,11 @@ class UserServiceDao[F[_]: Async](client: ServiceClient[F]) extends UserDao[F] {
   }
 
   override def getUser(uid: Int): OptionT[F, User] = {
-    logger.info(s"Retrieving user from user-service with UID ${uid}")
+    logger.info(s"Retrieving user from user-service with UID $uid")
 
     val req = HttpRequest(
       method = HttpMethods.GET,
-      uri = s"/user?uid=${uid}"
+      uri = s"/user?uid=$uid"
     )
 
     OptionT(
@@ -64,31 +56,28 @@ class UserServiceDao[F[_]: Async](client: ServiceClient[F]) extends UserDao[F] {
         none[ResponseEntity].pure[F]
       case _ =>
         Async[F].raiseError[Option[ResponseEntity]](
-          new Exception(s"Unexpected response from user-service, ${res}")
+          new Exception(s"Unexpected response from user-service, $res")
         )
     }
 }
 
-class UserServiceClient[F[_]: Async] extends ServiceClient[F] {
+class UserServiceClient[F[_] : Async] extends ServiceClient[F] {
 
-  val logger: Logger = Logger(classOf[UserServiceClient[F]])
-  implicit val system: ActorSystem = ActorSystem()
-  implicit val materialise: ActorMaterializer = ActorMaterializer()
-
+  val logger: Logger = Logger[UserServiceClient[F]]
   val location: String = Config.getProperty("service.user.location")
 
   override def perform(request: HttpRequest): F[HttpResponse] = {
-    val newUri = location + request.getUri().toString()
+    val newUri = location + request.getUri().toString
     val newReq = request.copy(uri = newUri)
-    logger.info(f"Performing request ${newReq}")
+    logger.info(f"Performing request $newReq")
 
     HttpUtils.futureToF(
       Http().singleRequest(newReq)
     )
   }
 
-  def unmarshal[A: FromEntityUnmarshaller](response: ResponseEntity): F[A] = {
-    logger.info(f"Unmarshalling response ${response}")
+  override def unmarshal[A: FromEntityUnmarshaller](response: ResponseEntity): F[A] = {
+    logger.info(f"Unmarshalling response $response")
     HttpUtils.futureToF(Unmarshal(response).to[A])
   }
 

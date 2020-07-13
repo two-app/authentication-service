@@ -1,26 +1,12 @@
 package config
 
-import db.DatabaseTestMixin
-import cats.effect.IO
-import credentials.CredentialsDao
-import credentials.DoobieCredentialsDao
-import user.UserService
-import user.UserServiceImpl
-import user.UserDao
-import user.UserServiceDao
-import request.ServiceClient
-import user.StubUserServiceClient
-import user.UserServiceClient
-import credentials.CredentialsService
-import credentials.CredentialsServiceImpl
-import tokens.TokenService
-import tokens.TokenServiceImpl
-import credentials.CredentialsRouteDispatcher
-import credentials.LoginRouteDispatcher
-import tokens.TokensRouteDispatcher
 import akka.http.scaladsl.server.Route
-import request.RouteDispatcher
-import user.StubUserServiceDao
+import cats.effect.IO
+import credentials._
+import db.DatabaseTestMixin
+import request.{RouteDispatcher, ServiceClient}
+import tokens.{TokenService, TokenServiceImpl, TokensRouteDispatcher}
+import user._
 
 class TestServices extends DatabaseTestMixin {
   val userServiceClient: ServiceClient[IO] = new UserServiceClient()

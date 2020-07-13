@@ -1,10 +1,7 @@
 package db
 
-import org.flywaydb.core.Flyway
-import config.Config
-import javax.sql.DataSource
 import com.typesafe.scalalogging.Logger
-import org.flywaydb.core.api.configuration.Configuration
+import org.flywaydb.core.Flyway
 
 object FlywayHelper {
 
